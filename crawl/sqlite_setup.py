@@ -179,34 +179,97 @@ def get_db_stats():
         print(f"최근 업데이트: {latest[0]} (크롤링: {latest[1]})")
 
 
-# 사용 예시
-if __name__ == "__main__":
-    # 1. 데이터베이스 초기화
-    init_database()
+def get_today_menus():
+    """
+    오늘 날짜의 식단 조회
+    오늘 날짜 메뉴가 없으면 가장 최근 메뉴를 반환
     
-    # 2. 테스트 데이터 삽입
-    test_data = [
-        {
-            'cafeteria': '라일락',
-            'date': '11월 18일',
-            'meals': '잡곡밥, 소고기국, 오징어까스',
-            'post_number': '211'
-        },
-        {
-            'cafeteria': '다래락',
-            'date': '11월 18일',
-            'meals': '백미밥, 된장찌개, 나물비빔밥',
-            'post_number': '211'
+    Returns:
+        dict: {
+            'is_today': bool,  # 오늘 날짜 메뉴인지 여부
+            'date': str,  # 메뉴 날짜
+            'message': str,  # 사용자에게 보여줄 메시지
+            'menus': list[dict]  # 메뉴 리스트
         }
-    ]
+        None: 메뉴가 전혀 없는 경우
+    """
+    from datetime import datetime
     
-    insert_menus(test_data)
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
     
-    # 3. 데이터 조회
-    print("\n=== 11월 18일 식단 조회 ===")
-    menus = get_menu_by_date('11월 18일')
-    for menu in menus:
-        print(f"{menu[1]}: {menu[3][:50]}...")
+    # 오늘 날짜 구하기 (예: "12월 5일")
+    today = datetime.now()
+    today_str = f"{today.month}월 {today.day}일"
     
-    # 4. 통계 확인
-    get_db_stats()
+    # 1. 먼저 오늘 날짜 메뉴가 있는지 확인
+    cursor.execute("""
+        SELECT id, cafeteria, date, meals, post_number, crawled_at
+        FROM menus
+        WHERE date = ?
+        ORDER BY cafeteria
+    """, (today_str,))
+    
+    today_rows = cursor.fetchall()
+    
+    if today_rows:
+        # 오늘 메뉴가 있는 경우
+        menus = []
+        for row in today_rows:
+            menu_dict = dict(row)
+            menu_dict['meals'] = [m.strip() for m in menu_dict['meals'].split(',')]
+            menus.append(menu_dict)
+        
+        conn.close()
+        return {
+            'id': today_rows[0]['id'],
+            'is_today': True,
+            'date': today_str,
+            'message': f'오늘({today_str}) 식단입니다.',
+            'menus': menus
+        }
+    
+    # 2. 오늘 메뉴가 없으면 가장 최근 메뉴 찾기
+    cursor.execute("""
+        SELECT DISTINCT date
+        FROM menus
+        ORDER BY crawled_at DESC
+        LIMIT 1
+    """)
+    
+    latest_date_row = cursor.fetchone()
+    
+    if not latest_date_row:
+        conn.close()
+        return None
+    
+    latest_date = latest_date_row[0]
+    
+    # 가장 최근 날짜의 메뉴 조회
+    cursor.execute("""
+        SELECT id, cafeteria, date, meals, post_number, crawled_at
+        FROM menus
+        WHERE date = ?
+        ORDER BY cafeteria
+    """, (latest_date,))
+    
+    rows = cursor.fetchall()
+    conn.close()
+    
+    # 결과를 딕셔너리 리스트로 변환
+    menus = []
+    for row in rows:
+        menu_dict = dict(row)
+        menu_dict['meals'] = [m.strip() for m in menu_dict['meals'].split(',')]
+        menus.append(menu_dict)
+    
+    return {
+        'id': latest_rows[0]['id'],
+        'is_today': False,
+        'date': latest_date,
+        'message': f'오늘({today_str})은 식단이 없습니다. 가장 최근 식단({latest_date})을 보여드립니다.',
+        'menus': menus
+    }
+
+
