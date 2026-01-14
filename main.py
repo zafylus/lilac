@@ -24,8 +24,16 @@ app.add_middleware(
 )
 
 # Supabase 설정
-SUPABASE_URL = "https://saqxsgqvyufkhrwdrgnx.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhcXhzZ3F2eXVma2hyd2RyZ254Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODMzMzEwNSwiZXhwIjoyMDgzOTA5MTA1fQ.CX0TKb1b6TAhv1U3kOpfypbxOtZ98BJvbR_eLP2UP3A"
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+    raise ValueError("❌ .env 파일에 SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY가 없습니다.")
 
 # Supabase 클라이언트 생성 (service_role 키 사용 - RLS 우회)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
