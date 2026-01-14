@@ -4,3 +4,5 @@
 .DS_Store
 CLAUDE.md
 crawl/.DS_Store
+.env
+docs/.env
