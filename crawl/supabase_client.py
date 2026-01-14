@@ -9,10 +9,10 @@ from supabase import create_client, Client
 def get_client() -> Client:
     """Supabase 클라이언트 생성"""
     url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY")
+    key = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
     if not url or not key:
-        raise ValueError("SUPABASE_URL과 SUPABASE_KEY 환경변수를 설정하세요.")
+        raise ValueError("SUPABASE_URL과 SUPABASE_KEY(또는 SUPABASE_SERVICE_ROLE_KEY) 환경변수를 설정하세요.")
 
     return create_client(url, key)
 

@@ -98,6 +98,7 @@ def transform_to_supabase_format(crawled_data: list[dict], post_date_str: str) -
             'week_start': format_date_for_db(week_start),
             'week_end': format_date_for_db(week_end),
             'day_of_week': day_of_week,
+            'menu_date': format_date_for_db(menu_date),
             'menu_text': item['meals']
         })
 
