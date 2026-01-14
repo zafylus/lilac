@@ -104,7 +104,7 @@ def crawl_menus(headless: bool = True) -> tuple[list[dict], str, str]:
         - post_date: 게시물 날짜 (예: "2025.01.13")
     """
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless, channel="chrome")
+        browser = p.chromium.launch(headless=headless)
         ctx = browser.new_context(
             locale="ko-KR",
             user_agent=(
@@ -153,7 +153,7 @@ def check_for_new_post(last_post_no: str, last_post_date: str, headless: bool = 
     Returns: (is_new, current_post_no, current_post_date)
     """
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless, channel="chrome")
+        browser = p.chromium.launch(headless=headless)
         ctx = browser.new_context(
             locale="ko-KR",
             user_agent=(

@@ -90,7 +90,7 @@ def format_daily_menus(raw_data, cafeteria_name, post_number, post_date):
 
 # Playwright 실행
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False, channel="chrome")
+    browser = p.chromium.launch(headless=True, channel="chrome")
     ctx = browser.new_context(
         locale="ko-KR",
         user_agent=(

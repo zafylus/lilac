@@ -35,7 +35,7 @@ def searchAndScreenshot(n: int, name: str, date: str):
 
 # Playwright
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False, channel="chrome")
+    browser = p.chromium.launch(headless=True, channel="chrome")
     ctx = browser.new_context(
             locale="ko-KR",
             user_agent=(
