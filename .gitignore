@@ -6,3 +6,5 @@ CLAUDE.md
 crawl/.DS_Store
 .env
 docs/.env
+lilac_release.jks
+lilac_key.jks
