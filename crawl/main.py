@@ -1,5 +1,5 @@
 """
-메인 실행 스크립트: 크롤링 → Supabase 업로드
+메인 실행 스크립트: 크롤링 → Supabase 업로드 → FCM 알림
 """
 import sys
 from crawler import crawl_menus
@@ -11,6 +11,7 @@ from supabase_client import (
     log_crawl
 )
 from utils import transform_to_supabase_format
+from fcm_notifier import get_fcm_notifier
 
 
 def main(headless: bool = True, force: bool = False):
@@ -80,6 +81,28 @@ def main(headless: bool = True, force: bool = False):
 
     # 8. 성공 로그 기록
     log_crawl(client, "success", f"Uploaded {len(supabase_data)} menus", post_no, post_date, new_data=True)
+
+    # 9. FCM 푸시 알림 전송
+    try:
+        print("\n📲 FCM 알림 전송 중...")
+        fcm_notifier = get_fcm_notifier()
+        
+        if fcm_notifier.initialized:
+            success = fcm_notifier.send_new_menu_notification(
+                post_no=post_no,
+                post_date=post_date,
+                menu_count=len(supabase_data)
+            )
+            
+            if success:
+                print("✅ FCM 알림 전송 성공")
+            else:
+                print("⚠️  FCM 알림 전송 실패 (크롤링은 정상 완료)")
+        else:
+            print("⚠️  FCM 초기화 실패 - 알림 전송 스킵")
+    except Exception as e:
+        # FCM 알림 실패는 치명적이지 않으므로 로그만 남기고 계속 진행
+        print(f"⚠️  FCM 알림 전송 중 오류 발생: {e}")
 
     print("\n" + "=" * 60)
     print("✅ 크롤링 완료!")
