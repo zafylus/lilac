@@ -10,7 +10,7 @@
 
 - **크롤러**: Python + Playwright
 - **API 서버**: FastAPI
-- **데이터베이스**: SQLite
+- **데이터베이스**: Supabase
 - **스케줄러**: GitHub Actions
 - **앱**: Android (Kotlin + Jetpack Compose)
 
