@@ -6,6 +6,9 @@ on:
     - cron: '0 0 * * 1-5'
     - cron: '0 1 * * 1-5'
     - cron: '0 2 * * 1-5'
+    # 주말(토-일) 오전 10시, 오후 6시 KST (UTC 1시, 9시)
+    - cron: '0 1 * * 0,6'
+    - cron: '0 9 * * 0,6'
   workflow_dispatch:  # 수동 실행 버튼
 
 jobs:
