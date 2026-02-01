@@ -1,5 +1,8 @@
 name: PKNU Menu Crawler
 
+env:
+  TZ: 'Asia/Seoul'
+
 on:
   schedule:
     # 평일(월-금) 오전 9시, 10시, 11시 KST (UTC 0시, 1시, 2시)
