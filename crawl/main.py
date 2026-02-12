@@ -1,7 +1,11 @@
 """
 메인 실행 스크립트: 크롤링 → Supabase 업로드 → FCM 알림
 """
+import os
 import sys
+import traceback
+
+import requests
 from crawler import crawl_menus
 from supabase_client import (
     get_client,
@@ -12,6 +16,37 @@ from supabase_client import (
 )
 from utils import transform_to_supabase_format
 from fcm_notifier import get_fcm_notifier
+
+
+def send_discord_error(message: str):
+    """Discord 웹훅으로 에러 알림 전송"""
+    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+    if not webhook_url:
+        print("⚠️  DISCORD_WEBHOOK_URL 미설정 - Discord 알림 스킵")
+        return
+    try:
+        requests.post(webhook_url, json={
+            "embeds": [{
+                "title": "❌ 크롤링 실패",
+                "description": message[:2000],
+                "color": 15548997,
+            }]
+        }, timeout=10)
+    except Exception as e:
+        print(f"⚠️  Discord 알림 전송 실패: {e}")
+
+
+def ping_healthcheck(status: str = "success"):
+    """Healthchecks.io에 ping 전송"""
+    ping_url = os.environ.get("HC_PING_URL")
+    if not ping_url:
+        print("⚠️  HC_PING_URL 미설정 - Healthcheck ping 스킵")
+        return
+    try:
+        url = ping_url if status == "success" else f"{ping_url}/fail"
+        requests.get(url, timeout=10)
+    except Exception as e:
+        print(f"⚠️  Healthcheck ping 실패: {e}")
 
 
 def main(headless: bool = True, force: bool = False):
@@ -32,7 +67,7 @@ def main(headless: bool = True, force: bool = False):
         print("✅ Supabase 연결 성공")
     except ValueError as e:
         print(f"❌ Supabase 연결 실패: {e}")
-        return
+        raise
 
     # 2. 마지막 크롤링 상태 조회
     last_state = get_last_state(client)
@@ -48,7 +83,7 @@ def main(headless: bool = True, force: bool = False):
     except Exception as e:
         print(f"❌ 크롤링 실패: {e}")
         log_crawl(client, "error", str(e))
-        return
+        raise
 
     # 4. 새 게시물인지 확인
     if not force and last_state:
@@ -64,7 +99,7 @@ def main(headless: bool = True, force: bool = False):
     except Exception as e:
         print(f"❌ 데이터 변환 실패: {e}")
         log_crawl(client, "error", f"Transform failed: {e}", post_no, post_date)
-        return
+        raise
 
     # 6. Supabase에 업로드
     try:
@@ -73,7 +108,7 @@ def main(headless: bool = True, force: bool = False):
     except Exception as e:
         print(f"❌ Supabase 업로드 실패: {e}")
         log_crawl(client, "error", f"Upload failed: {e}", post_no, post_date)
-        return
+        raise
 
     # 7. 상태 업데이트
     update_state(client, post_no, post_date)
@@ -119,4 +154,11 @@ if __name__ == "__main__":
     if force:
         print("⚡ 강제 실행 모드")
 
-    main(headless=headless, force=force)
+    try:
+        main(headless=headless, force=force)
+        ping_healthcheck("success")
+    except Exception as e:
+        print(f"❌ 크롤링 실패: {traceback.format_exc()}")
+        send_discord_error(str(e))
+        ping_healthcheck("fail")
+        sys.exit(1)

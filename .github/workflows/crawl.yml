@@ -41,33 +41,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         working-directory: crawl
         run: python main.py
-
-      - name: Discord notification (Success)
-        if: success()
-        run: |
-          curl -H "Content-Type: application/json" \
-            -d '{
-              "embeds": [{
-                "title": "✅ 크롤링 성공",
-                "description": "부경대 학식 메뉴 크롤링이 완료되었습니다.",
-                "color": 5763719,
-                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-              }]
-            }' \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}
-
-      - name: Discord notification (Failure)
-        if: failure()
-        run: |
-          curl -H "Content-Type: application/json" \
-            -d '{
-              "embeds": [{
-                "title": "❌ 크롤링 실패",
-                "description": "크롤링 중 오류가 발생했습니다.\n[로그 확인](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})",
-                "color": 15548997,
-                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
-              }]
-            }' \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}
